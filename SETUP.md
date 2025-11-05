@@ -44,8 +44,8 @@ ELASTICSEARCH_PASSWORD=your_password_from_elasticsearch_env
 ELASTICSEARCH_API_KEY=your_api_key_from_elasticsearch_env
 ELASTICSEARCH_VERIFY_CERTS=false
 
-EMBEDDING_URL=http://test.2brain.cn:9800/v1/emb
-RERANK_URL=http://test.2brain.cn:2260/rerank
+EMBEDDING_URL=your_embedding_url
+RERANK_URL=your_rerank_url
 
 # Optional: LLM API for answer generation
 LLM_API_URL=
@@ -96,12 +96,12 @@ python main.py query --query "Your question here"
 ### API Connection Issues
 
 1. **Embedding API:**
-   - Verify the URL is accessible: `curl http://test.2brain.cn:9800/v1/emb`
+   - Verify the URL is accessible: `curl your_embedding_url`
    - Check network connectivity
    - The system will use zero vectors as fallback if API fails
 
 2. **Re-ranker API:**
-   - Verify the URL is accessible: `curl http://test.2brain.cn:2260/rerank`
+   - Verify the URL is accessible: `curl your_rerank_url`
    - If API fails, the system automatically falls back to RRF
 
 ### Common Errors

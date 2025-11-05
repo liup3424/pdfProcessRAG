@@ -1,10 +1,8 @@
-"""
-Retrieval Module
-Implements hybrid search combining BM25 and vector search.
-"""
+"""Retrieval Module - Hybrid BM25 + Vector Search."""
 from typing import List, Dict, Optional
+import logging
 from elasticsearch import Elasticsearch
-import config
+from . import config
 import numpy as np
 
 
@@ -27,7 +25,7 @@ class HybridRetriever:
         self.vector_weight = config.VECTOR_WEIGHT
     
     def _create_client(self) -> Elasticsearch:
-        """Create Elasticsearch client."""
+        """Create Elasticsearch client using available credentials."""
         if config.ELASTICSEARCH_API_KEY:
             es_client = Elasticsearch(
                 [config.ELASTICSEARCH_HOST],
@@ -143,7 +141,7 @@ class HybridRetriever:
             return results
             
         except Exception as e:
-            print(f"Error performing search: {e}")
+            logging.getLogger(__name__).error("Error performing search: %s", e, exc_info=True)
             return []
     
     def search_bm25_only(self, query: str, top_k: int = None) -> List[Dict]:
@@ -195,7 +193,7 @@ class HybridRetriever:
             return results
             
         except Exception as e:
-            print(f"Error performing BM25 search: {e}")
+            logging.getLogger(__name__).error("Error performing BM25 search: %s", e, exc_info=True)
             return []
     
     def search_vector_only(
@@ -259,6 +257,6 @@ class HybridRetriever:
             return results
             
         except Exception as e:
-            print(f"Error performing vector search: {e}")
+            logging.getLogger(__name__).error("Error performing vector search: %s", e, exc_info=True)
             return []
 

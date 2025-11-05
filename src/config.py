@@ -16,12 +16,12 @@ ELASTICSEARCH_VERIFY_CERTS = os.getenv("ELASTICSEARCH_VERIFY_CERTS", "false").lo
 ELASTICSEARCH_INDEX_NAME = os.getenv("ELASTICSEARCH_INDEX_NAME", "pdf_rag_index")
 
 # Embedding Configuration
-EMBEDDING_URL = os.getenv("EMBEDDING_URL", "http://test.2brain.cn:9800/v1/emb")
+EMBEDDING_URL = os.getenv("EMBEDDING_URL", "")
 EMBEDDING_MODEL = "qwen3-embedding-0.6b"
 EMBEDDING_DIMENSION = 1024  # Dimension for qwen3-embedding-0.6b
 
 # Re-ranking Configuration
-RERANK_URL = os.getenv("RERANK_URL", "http://test.2brain.cn:2260/rerank")
+RERANK_URL = os.getenv("RERANK_URL", "")
 RERANK_MODEL = "qwen3-reranker-0.6b"
 RERANK_TOP_K = 10  # Number of results to re-rank
 

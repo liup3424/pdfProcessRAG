@@ -5,7 +5,7 @@ Provides local embedding function for vectorization.
 from typing import List
 import logging
 import requests
-import config
+from . import config
 
 # Set up logger
 logger = logging.getLogger(__name__)

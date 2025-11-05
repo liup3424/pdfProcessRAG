@@ -5,9 +5,16 @@ Command-line interface for the RAG system.
 import argparse
 import logging
 import os
-from rag_pipeline import RAGPipeline
-from setup_logging import setup_logging
-import config
+import sys
+from pathlib import Path
+
+# Add src directory to Python path
+project_root = Path(__file__).parent
+sys.path.insert(0, str(project_root))
+
+from src.rag_pipeline import RAGPipeline
+from src.setup_logging import setup_logging
+from src import config
 
 
 def main():

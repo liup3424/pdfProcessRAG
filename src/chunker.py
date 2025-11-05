@@ -18,7 +18,7 @@ except ImportError:
         from langchain.schema import Document
     except ImportError:
         from langchain_core.documents import Document
-import config
+from . import config
 
 # Set up logger
 logger = logging.getLogger(__name__)

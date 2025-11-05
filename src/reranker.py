@@ -3,8 +3,9 @@ Re-ranking Module
 Applies Reciprocal Rank Fusion (RRF) or re-ranker model to refine search results.
 """
 from typing import List, Dict, Optional
+import logging
 import requests
-import config
+from . import config
 from collections import defaultdict
 
 
@@ -158,7 +159,6 @@ class Reranker:
                 # Fallback to RRF if API format is unexpected
                 logger.warning(f"Unexpected reranker API response format. Keys: {list(result.keys()) if isinstance(result, dict) else 'list'}")
                 logger.debug(f"Full response: {result}")
-                print("Unexpected API response format, falling back to RRF")
                 return self._rerank_with_rrf(results, top_k)
             
             # Re-order results based on re-ranker scores
@@ -172,11 +172,11 @@ class Reranker:
             return reranked_results
             
         except requests.exceptions.RequestException as e:
-            print(f"Error calling re-ranker API: {e}")
-            print("Falling back to RRF")
+            logging.getLogger(__name__).error("Error calling re-ranker API: %s", e)
+            logging.getLogger(__name__).info("Falling back to RRF")
             return self._rerank_with_rrf(results, top_k)
         except Exception as e:
-            print(f"Error processing re-ranking: {e}")
+            logging.getLogger(__name__).error("Error processing re-ranking: %s", e, exc_info=True)
             return self._rerank_with_rrf(results, top_k)
     
     def _rerank_with_rrf(self, results: List[Dict], top_k: int) -> List[Dict]:

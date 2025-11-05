@@ -4,15 +4,14 @@ Complete pipeline for processing PDFs and querying.
 """
 import logging
 from typing import List, Dict, Optional
-from pdf_processor import PDFProcessor
-from chunker import TextChunker
-from vectorizer import Vectorizer
-from es_indexer import ESIndexer
-from retriever import HybridRetriever
-from reranker import Reranker
-from answer_generator import AnswerGenerator
-import config
-from embedding import local_embedding
+from .pdf_processor import PDFProcessor
+from .chunker import TextChunker
+from .es_indexer import ESIndexer
+from .retriever import HybridRetriever
+from .reranker import Reranker
+from .answer_generator import AnswerGenerator
+from . import config
+from .embedding import local_embedding
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -25,31 +24,18 @@ class RAGPipeline:
         """Initialize pipeline components."""
         self.pdf_processor = PDFProcessor()
         self.chunker = TextChunker()
-        self.vectorizer = Vectorizer()
         self.indexer = ESIndexer()
         self.retriever = HybridRetriever()
         self.reranker = Reranker()
         self.answer_generator = AnswerGenerator()
     
     def process_documents(self, pdf_paths: List[str]) -> Dict[str, bool]:
-        """
-        Process multiple PDF files.
-        
-        Args:
-            pdf_paths: List of PDF file paths
-            
-        Returns:
-            Dictionary mapping PDF paths to success status
-        """
-        results = {}
+        """Process multiple PDF files and return success status per file."""
+        results: Dict[str, bool] = {}
         for pdf_path in pdf_paths:
-            print(f"\n{'='*80}")
-            print(f"Processing: {pdf_path}")
-            print(f"{'='*80}")
-            
-            success = self._process_single_pdf(pdf_path)
+            logger.info("Processing PDF: %s", pdf_path)
+            success = self.process_pdf(pdf_path)
             results[pdf_path] = success
-        
         return results
     
     def process_pdf(self, pdf_path: str) -> bool:
@@ -63,45 +49,41 @@ class RAGPipeline:
         Returns:
             True if processing was successful
         """
-        print(f"Processing PDF: {pdf_path}")
+        logger.info("Processing single PDF: %s", pdf_path)
         
         # Step 1: Load PDF pages using PyMuPDFLoader
-        print("Step 1: Loading PDF pages...")
+        logger.info("Step 1: Loading PDF pages")
         try:
             pages = self.pdf_processor.load_pages(pdf_path)
-            print(f"✓ Loaded {len(pages)} pages from PDF")
+            logger.info("Loaded %d pages from PDF", len(pages))
         except Exception as e:
-            print(f"✗ Error loading PDF: {e}")
+            logger.error("Error loading PDF: %s", e, exc_info=True)
             return False
         
         # Step 2: Chunk the pages using RecursiveCharacterTextSplitter with tiktoken
-        print("Step 2: Chunking pages...")
+        logger.info("Step 2: Chunking pages")
         logger.info("Starting chunking process")
         try:
             chunks = self.chunker.chunk_documents(pages)
-            print(f"✓ Created {len(chunks)} chunks")
             logger.info(f"Chunking completed: {len(chunks)} chunks created")
         except Exception as e:
-            print(f"✗ Error chunking pages: {e}")
             logger.error(f"Chunking failed: {e}", exc_info=True)
             return False
         
         # Step 3: Generate embeddings using local_embedding
-        print("Step 3: Generating embeddings...")
+        logger.info("Step 3: Generating embeddings")
         logger.info("Starting embedding generation")
         try:
             texts = [chunk["text"] for chunk in chunks]
             logger.info(f"Preparing {len(texts)} texts for embedding")
             embeddings = local_embedding(texts)
-            print(f"✓ Generated {len(embeddings)} embeddings")
             logger.info(f"Embedding generation completed: {len(embeddings)} embeddings")
         except Exception as e:
-            print(f"✗ Error generating embeddings: {e}")
             logger.error(f"Embedding generation failed: {e}", exc_info=True)
             return False
         
         # Step 4: Index in Elasticsearch
-        print("Step 4: Indexing in Elasticsearch...")
+        logger.info("Step 4: Indexing in Elasticsearch")
         try:
             # Ensure index exists
             self.indexer.create_index()
@@ -109,20 +91,18 @@ class RAGPipeline:
             # Index documents
             success = self.indexer.index_documents(chunks, embeddings)
             if success:
-                print(f"✓ Successfully indexed {len(chunks)} documents")
+                logger.info("Successfully indexed %d documents", len(chunks))
             else:
-                print("✗ Error indexing documents")
+                logger.error("Error indexing documents")
                 return False
         except Exception as e:
-            print(f"✗ Error indexing: {e}")
+            logger.error("Error indexing: %s", e, exc_info=True)
             return False
         
-        print("✓ PDF processing completed successfully!")
+        logger.info("PDF processing completed successfully")
         return True
     
-    def _process_single_pdf(self, pdf_path: str) -> bool:
-        """Internal method for processing a single PDF (used by process_documents)."""
-        return self.process_pdf(pdf_path)
+    
     
     def query(
         self,
@@ -178,7 +158,7 @@ class RAGPipeline:
     def initialize_index(self):
         """Initialize Elasticsearch index."""
         self.indexer.create_index()
-        print("Index initialized successfully.")
+        logger.info("Index initialized successfully")
     
     def test_connection(self) -> bool:
         """Test Elasticsearch connection."""

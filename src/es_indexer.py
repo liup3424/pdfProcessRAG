@@ -3,9 +3,10 @@ Elasticsearch Indexing Module
 Stores content and vectors in Elasticsearch.
 """
 from typing import List, Dict, Optional
+import logging
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
-import config
+from . import config
 import json
 
 
@@ -60,7 +61,7 @@ class ESIndexer:
         
         # Check if index already exists
         if self.client.indices.exists(index=self.index_name):
-            print(f"Index '{self.index_name}' already exists.")
+            logging.getLogger(__name__).info("Index '%s' already exists.", self.index_name)
             return True
         
         # Define index mapping with dense_vector for embeddings
@@ -101,16 +102,16 @@ class ESIndexer:
                 index=self.index_name,
                 mappings=mapping["mappings"]
             )
-            print(f"Index '{self.index_name}' created successfully.")
+            logging.getLogger(__name__).info("Index '%s' created successfully.", self.index_name)
             return True
         except Exception as e:
             # Fallback to body parameter for older versions
             try:
                 self.client.indices.create(index=self.index_name, body=mapping)
-                print(f"Index '{self.index_name}' created successfully.")
+                logging.getLogger(__name__).info("Index '%s' created successfully.", self.index_name)
                 return True
             except Exception as e2:
-                print(f"Error creating index: {e2}")
+                logging.getLogger(__name__).error("Error creating index: %s", e2, exc_info=True)
                 return False
     
     def index_documents(self, chunks: List[Dict], embeddings: List[List[float]]) -> bool:
@@ -149,17 +150,17 @@ class ESIndexer:
             success, failed = bulk(self.client, actions, chunk_size=100, raise_on_error=False)
             
             if failed:
-                print(f"Warning: {len(failed)} documents failed to index.")
+                logging.getLogger(__name__).warning("%d documents failed to index.", len(failed))
                 # Print first few errors for debugging
                 for i, error in enumerate(failed[:3]):
-                    print(f"  Error {i+1}: {error}")
+                    logging.getLogger(__name__).warning("  Error %d: %s", i+1, error)
                 return False
             
-            print(f"Successfully indexed {success} documents.")
+            logging.getLogger(__name__).info("Successfully indexed %d documents.", success)
             return True
             
         except Exception as e:
-            print(f"Error indexing documents: {e}")
+            logging.getLogger(__name__).error("Error indexing documents: %s", e, exc_info=True)
             import traceback
             traceback.print_exc()
             return False
@@ -174,13 +175,13 @@ class ESIndexer:
         try:
             if self.client.indices.exists(index=self.index_name):
                 self.client.indices.delete(index=self.index_name)
-                print(f"Index '{self.index_name}' deleted successfully.")
+                logging.getLogger(__name__).info("Index '%s' deleted successfully.", self.index_name)
                 return True
             else:
-                print(f"Index '{self.index_name}' does not exist.")
+                logging.getLogger(__name__).info("Index '%s' does not exist.", self.index_name)
                 return False
         except Exception as e:
-            print(f"Error deleting index: {e}")
+            logging.getLogger(__name__).error("Error deleting index: %s", e, exc_info=True)
             return False
     
     def get_index_stats(self) -> Dict:
@@ -194,7 +195,7 @@ class ESIndexer:
             stats = self.client.indices.stats(index=self.index_name)
             return stats
         except Exception as e:
-            print(f"Error getting index stats: {e}")
+            logging.getLogger(__name__).error("Error getting index stats: %s", e, exc_info=True)
             return {}
     
     def test_connection(self) -> bool:
@@ -206,9 +207,9 @@ class ESIndexer:
         """
         try:
             info = self.client.info()
-            print(f"Connected to Elasticsearch: {info['version']['number']}")
+            logging.getLogger(__name__).info("Connected to Elasticsearch: %s", info['version']['number'])
             return True
         except Exception as e:
-            print(f"Error connecting to Elasticsearch: {e}")
+            logging.getLogger(__name__).error("Error connecting to Elasticsearch: %s", e, exc_info=True)
             return False
 

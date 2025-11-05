@@ -3,9 +3,10 @@ Answer Generation Module
 Generates final answers based on retrieved documents using an LLM.
 """
 from typing import List, Dict, Optional
+import logging
 import requests
 import os
-import config
+from . import config
 
 
 class AnswerGenerator:
@@ -50,7 +51,7 @@ class AnswerGenerator:
             return self._generate_with_api(query, context)
         else:
             if self.llm_api_url and not self.llm_api_key:
-                print("Warning: LLM_API_URL is set but LLM_API_KEY is missing. Using simple answer generator.")
+                logging.getLogger(__name__).warning("LLM_API_URL is set but LLM_API_KEY is missing. Using simple answer generator.")
             return self._generate_simple_answer(query, context, retrieved_docs)
     
     def _build_context(self, docs: List[Dict], max_length: int) -> str:
@@ -193,8 +194,9 @@ class AnswerGenerator:
             
             # Log error details if request fails
             if response.status_code != 200:
-                print(f"LLM API Error: {response.status_code}")
-                print(f"Response: {response.text[:500]}")
+                logger = logging.getLogger(__name__)
+                logger.error("LLM API Error: %s", response.status_code)
+                logger.error("Response: %s", response.text[:500])
             
             response.raise_for_status()
             
@@ -228,10 +230,10 @@ class AnswerGenerator:
                 return "Error: Unexpected API response format"
                 
         except requests.exceptions.RequestException as e:
-            print(f"Error calling LLM API: {e}")
+            logging.getLogger(__name__).error("Error calling LLM API: %s", e, exc_info=True)
             return self._generate_simple_answer(query, context, [])
         except Exception as e:
-            print(f"Error generating answer: {e}")
+            logging.getLogger(__name__).error("Error generating answer: %s", e, exc_info=True)
             return self._generate_simple_answer(query, context, [])
     
     def _generate_simple_answer(
